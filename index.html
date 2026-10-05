@@ -105,10 +105,9 @@ if(!user){const p={...base,guest:true};ls("ethereal_guest",JSON.stringify(p));se
 try{const{Db,db}=fb.current,low=n.toLowerCase(),old=(prof&&prof.username||"").toLowerCase();
 const t=await Db.get(Db.ref(db,"usernames/"+low));
 if(t.exists()&&t.val()!==user.uid){setBusy(false);return setErr("Ese nombre ya está en uso.")}
-await Db.set(Db.ref(db,"usernames/"+low),user.uid);
-const p={...base,updatedAt:Date.now()};await Db.set(Db.ref(db,"users/"+user.uid),p);
-if(old&&old!==low)Db.remove(Db.ref(db,"usernames/"+old)).catch(()=>{});
-enter({...p,uid:user.uid,gphoto:user.photoURL})}catch(e){setErr("No se pudo guardar el perfil. Revisa las reglas de la base de datos.")}setBusy(false)};
+const p={...base,updatedAt:Date.now()},up={};up["users/"+user.uid]=p;up["usernames/"+low]=user.uid;if(old&&old!==low)up["usernames/"+old]=null;
+await Db.update(Db.ref(db),up);
+enter({...p,uid:user.uid,gphoto:user.photoURL})}catch(e){console.error("Firebase save error",e);const c=e&&e.code||"",m=String(e&&e.message||e);setErr(/permission_denied/i.test(c+m)?"Permiso denegado: publica las reglas nuevas en Realtime Database > Reglas (archivo firebase-database-rules.json).":"No se pudo guardar el perfil: "+m)}setBusy(false)};
 const out=async()=>{ls("ethereal_guest",null);window.__profile=null;setProf(null);setMenu(0);setAsk("");load({});if(fb.current&&user)await fb.current.Au.signOut(fb.current.auth);else{setUser(null);setPhase("login")}};
 const custom=(v)=>{let g;try{g=[...new Intl.Segmenter(undefined,{granularity:"grapheme"}).segment(v)].map(x=>x.segment)}catch(e){g=Array.from(v)}if(g[0]){setEmo(g[0]);setAvT("emoji")}};
 const css=h("style",{},AU_CSS);
